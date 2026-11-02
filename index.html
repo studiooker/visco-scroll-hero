@@ -295,9 +295,11 @@
       void main() {
         vec2 frag = gl_FragCoord.xy;
         vec2 uv   = frag / uRes;
-        vec2 id   = floor((frag - uRes * 0.5) / uCell);     // grid anchored on the centre
-        vec2 cuv  = (frag - uRes * 0.5) / uCell - id - 0.5; // -0.5 … 0.5 inside the cell
-        vec2 cc   = ((id + 0.5) * uCell + uRes * 0.5) / uRes;
+        vec2 rel  = frag - uRes * 0.5;                      // grid anchored on the centre
+        vec2 shift = vec2(0.0, mod(floor(rel.x / uCell.x), 2.0) * 0.5 * uCell.y); // every other column offset by half a cell
+        vec2 id   = floor((rel + shift) / uCell);
+        vec2 cuv  = (rel + shift) / uCell - id - 0.5;       // -0.5 … 0.5 inside the cell
+        vec2 cc   = ((id + 0.5) * uCell - shift + uRes * 0.5) / uRes;
 
         // Distance from the centre: 0 in the middle, 1 where the wave leaves the frame
         // (rectangle reaches the edges all at once; diamond is measured in pixels so its
