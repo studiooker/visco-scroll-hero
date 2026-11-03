@@ -4,12 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Visco — Scroll Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400&display=swap">
 <style>
   @font-face {
     font-family: "Denim INK WD";
     src: local("DenimINKWD-TRIAL-Medium"),
          url("assets/fonts/DenimINKWD-TRIAL-Medium.otf") format("opentype");
     font-weight: 500;
+    font-display: block;
+  }
+  @font-face {
+    font-family: "Denim INK WD";
+    src: local("DenimINKWD-TRIAL-Regular"),
+         url("assets/fonts/DenimINKWD-TRIAL-Regular.otf") format("opentype");
+    font-weight: 400;
     font-display: block;
   }
   @font-face {
@@ -24,10 +34,13 @@
     --visco-surface-accent: #3941d9;
     --visco-text-on-dark: #fff;
     --visco-space-xs: 6px;
+    --visco-surface-panel: #252424;
+    --visco-surface-page: #fff;
     /* Figma frames render the films at ~67.5% brightness over the black hero */
     --film-dim: rgba(0, 0, 0, 0.325);
     --font-display: "Denim INK WD", system-ui, sans-serif;
     --font-ui: "Test Die Grotesk A", system-ui, sans-serif;
+    --font-label: "Geist", system-ui, sans-serif;
   }
 
   * { box-sizing: border-box; }
@@ -152,14 +165,95 @@
   }
   .bottom-ctas__divider img { display: block; width: 27.1849px; height: 1px; }
 
-  /* Next section placeholder so the hero releases naturally */
-  .after { height: 60vh; display: grid; place-items: center; font: 400 15px/1.45 var(--font-ui); color: #777; }
+  /* ---------- Benefits (tabbed panel) ---------- */
+  .benefits { background: var(--visco-surface-panel); padding: 48px; }
+  .benefits__inner { max-width: 1600px; margin: 0 auto; }
+  .benefits__card {
+    position: relative; height: 561.18px;
+    background: #19191a; border-radius: 8px; overflow: clip;
+  }
+  .benefits__panel {
+    position: absolute; inset: -1px; max-height: 666px;
+    border: 1px solid rgba(0, 0, 0, .2); border-radius: 8px; overflow: clip;
+  }
+  .benefits__img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0; transition: opacity .8s ease;
+  }
+  .benefits__img.is-active { opacity: 1; }
+  .benefits__shade {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, .6) 14%, rgba(0, 0, 0, 0) 49%, rgba(0, 0, 0, .8) 84%);
+  }
+  .benefits__eyebrow {
+    position: absolute; left: 36.44px; top: 29.65px; margin: 0;
+    font: 400 14px/29.647px var(--font-label); text-transform: uppercase;
+    color: var(--visco-text-on-dark); opacity: .5; white-space: nowrap;
+  }
+  .benefits__count {
+    position: absolute; right: 42.2px; top: 31px; margin: 0;
+    font: 400 48px/48px var(--font-display);
+    color: var(--visco-text-on-dark); opacity: .5;
+  }
+
+  .benefits__tabs {
+    position: absolute; left: 32px; right: 32px; bottom: 32px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;
+  }
+  .tab {
+    position: relative; height: 176.43px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 16px 0; border: 0; background: none; text-align: left;
+    color: #fff; cursor: pointer; font: inherit;
+  }
+  .tab:focus-visible { outline: 1px solid #fff; outline-offset: 4px; }
+  .tab__title {
+    font: 400 22px/32px var(--font-display); color: #fff;
+    opacity: .54; transition: opacity .3s ease;
+  }
+  .tab:hover .tab__title, .tab.is-active .tab__title { opacity: 1; }
+  .tab__body {
+    display: grid; grid-template-rows: 0fr;
+    transition: grid-template-rows .5s ease;
+  }
+  .tab__body > span { overflow: hidden; min-height: 0; }
+  .tab__desc {
+    display: block; padding-top: 16px;
+    font: 400 14px/19.765px var(--font-ui); color: rgba(255, 255, 255, .8);
+    opacity: 0; transition: opacity .3s ease;
+  }
+  .tab.is-active .tab__body { grid-template-rows: 1fr; }
+  .tab.is-active .tab__desc { opacity: 1; transition-delay: .15s; }
+  .tab__line { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: #8b8b8b; }
+  .tab__progress {
+    position: absolute; inset: 0; background: var(--visco-surface-page);
+    transform: scaleX(0); transform-origin: left;
+  }
+  .tab.is-active .tab__progress { animation: benefits-progress var(--benefits-duration, 6s) linear forwards; }
+  .benefits.is-paused .tab__progress { animation-play-state: paused; }
+  @keyframes benefits-progress { to { transform: scaleX(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .tab.is-active .tab__progress { animation: none; transform: scaleX(1); }
+    .benefits__img, .tab__body, .tab__desc, .tab__title { transition: none; }
+  }
 
   @media (max-width: 900px) {
     .nav__btn:not(.nav__burger) { display: none; }
     .title--hero { white-space: normal; width: calc(100vw - 32px); }
     .header { padding: 16px; }
     .progress { right: 12px; }
+
+    /* Benefits: photo on top, tabs stacked underneath */
+    .benefits { padding: 16px; }
+    .benefits__card { height: auto; }
+    .benefits__panel { height: 300px; }
+    .benefits__eyebrow { left: 20px; top: 14px; }
+    .benefits__count { right: 20px; top: 20px; font-size: 36px; line-height: 36px; }
+    .benefits__tabs {
+      position: relative; left: auto; right: auto; bottom: auto;
+      grid-template-columns: 1fr; gap: 0; padding: 300px 20px 12px;
+    }
+    .tab { height: auto; padding: 18px 0; }
   }
   @media (max-width: 560px) {
     .header .cta--accent > span:first-child { display: none; }
@@ -178,7 +272,7 @@
   <nav class="nav" aria-label="Primary">
     <a class="nav__btn" href="#">Platform</a>
     <a class="nav__btn" href="#">Cases</a>
-    <a class="nav__btn" href="#">Operations</a>
+    <a class="nav__btn" href="#">Approach</a>
     <button class="nav__btn nav__burger" type="button" aria-label="Menu">
       <span class="hamburger"><span></span><span></span></span>
     </button>
@@ -218,7 +312,41 @@
       </div>
     </div>
   </section>
-  <section class="after">Next section</section>
+  <section class="benefits" aria-label="Benefits">
+    <div class="benefits__inner">
+      <div class="benefits__card">
+        <div class="benefits__panel" id="benefits-panel" role="tabpanel" aria-live="polite">
+          <img class="benefits__img" data-img="1" src="assets/benefits-1.png" alt="Operator in a hard hat using a tablet inside a machine cab.">
+          <img class="benefits__img" data-img="2" src="assets/benefits-2.png" alt="Worker in a high-visibility vest using a tablet inside an industrial facility.">
+          <div class="benefits__shade"></div>
+          <p class="benefits__eyebrow">One operational flow</p>
+          <p class="benefits__count" aria-hidden="true">01</p>
+        </div>
+        <div class="benefits__tabs" role="tablist" aria-label="Benefits">
+          <button class="tab" type="button" role="tab" data-img="2" aria-controls="benefits-panel">
+            <span class="tab__title">See the full picture</span>
+            <span class="tab__body"><span><span class="tab__desc">Bring the asset, the information and the work together in one visual environment.</span></span></span>
+            <span class="tab__line"><span class="tab__progress"></span></span>
+          </button>
+          <button class="tab" type="button" role="tab" data-img="1" aria-controls="benefits-panel">
+            <span class="tab__title">Find what matters fast</span>
+            <span class="tab__body"><span><span class="tab__desc">Move directly from the big picture to the asset, drawing, data or detail you need.</span></span></span>
+            <span class="tab__line"><span class="tab__progress"></span></span>
+          </button>
+          <button class="tab" type="button" role="tab" data-img="2" aria-controls="benefits-panel">
+            <span class="tab__title">Work in context</span>
+            <span class="tab__body"><span><span class="tab__desc">See information where it belongs, around the physical environment, the task and the people doing the work.</span></span></span>
+            <span class="tab__line"><span class="tab__progress"></span></span>
+          </button>
+          <button class="tab" type="button" role="tab" data-img="1" aria-controls="benefits-panel">
+            <span class="tab__title">Move straight to execution</span>
+            <span class="tab__body"><span><span class="tab__desc">Turn operational understanding into clearer decisions, better coordination and more confident execution.</span></span></span>
+            <span class="tab__line"><span class="tab__progress"></span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -551,6 +679,51 @@
     clock = films[0].currentTime % duration;
     last = null;
   });
+
+  /* ---------------- Benefits tabs ----------------
+     The active tab's line fills over BENEFITS_MS, then the next tab takes
+     over. Clicking a tab jumps to it and restarts the timer. The timer
+     pauses while the section is off screen. */
+  const BENEFITS_MS = 6000;
+  const benefits = document.querySelector('.benefits');
+  const tabs = [...benefits.querySelectorAll('.tab')];
+  const images = [...benefits.querySelectorAll('.benefits__img')];
+  const count = benefits.querySelector('.benefits__count');
+  const autoplay = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  benefits.style.setProperty('--benefits-duration', `${BENEFITS_MS}ms`);
+
+  function selectTab(index) {
+    tabs.forEach((tab, i) => {
+      const active = i === index;
+      tab.classList.remove('is-active');
+      tab.setAttribute('aria-selected', active);
+      tab.tabIndex = active ? 0 : -1;
+    });
+    void tabs[index].offsetWidth;       // restart the progress animation
+    tabs[index].classList.add('is-active');
+    images.forEach(img => img.classList.toggle('is-active', img.dataset.img === tabs[index].dataset.img));
+    count.textContent = String(index + 1).padStart(2, '0');
+  }
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => selectTab(i));
+    tab.querySelector('.tab__progress').addEventListener('animationend', () => {
+      if (autoplay) selectTab((i + 1) % tabs.length);
+    });
+    tab.addEventListener('keydown', e => {
+      const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!step) return;
+      const next = (i + step + tabs.length) % tabs.length;
+      selectTab(next);
+      tabs[next].focus();
+    });
+  });
+
+  new IntersectionObserver(([entry]) => {
+    benefits.classList.toggle('is-paused', !entry.isIntersecting);
+  }, { threshold: .35 }).observe(benefits);
+
+  selectTab(0);
 })();
 </script>
 </body>
