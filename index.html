@@ -54,7 +54,7 @@
   body { -webkit-font-smoothing: antialiased; }
 
   /* ---------- Scroll track ---------- */
-  .scroller { position: relative; height: 500vh; background: var(--visco-surface-panel); } /* 1 screen + 2 segments × 200vh */
+  .scroller { position: relative; height: 500vh; background: var(--visco-surface-panel); } /* 1 screen + 2 segments × 200vh (scrub); snap shortens it to 300vh */
   .stage {
     position: sticky; top: 0;
     height: 100vh; max-height: 1280px;
@@ -732,9 +732,14 @@
   // Each scroll segment: rest | transition | rest. Everything animates inside [START, END].
   // Wipe, blobs and field are quicker: 40vh instead of 80vh, with the titles moving in the same window.
   const QUICK = SHAPE === SHAPES.wipe || SHAPE === SHAPES.blobs || SHAPE === SHAPES.field;
-  const [TRANSITION_START, TRANSITION_END] = QUICK ? [.4, .6] : [.3, .7];
+  // Scroll behaviour: snap (default) plays each transition as a timed animation once the
+  // scroll crosses a threshold; ?scroll=scrub ties the transitions to the scroll position.
+  const SNAP = params.get('scroll') !== 'scrub';
+  const [TRANSITION_START, TRANSITION_END] = SNAP ? [0, 1] : QUICK ? [.4, .6] : [.3, .7];
 
   const scroller = document.getElementById('hero');
+  // Snapping only needs a short track: one screen per view, pinned until the last one
+  if (SNAP) scroller.style.height = `${(1 + TRANSITIONS) * 100}vh`;
   const films = [...document.querySelectorAll('.film')];
   const titles = [...document.querySelectorAll('[data-title]')];
   const thumb = document.querySelector('.progress__thumb');
@@ -1039,32 +1044,94 @@
     thumb.style.transform = `translateY(${(pos * BAR_STEP).toFixed(2)}px)`;
   }
 
-  // The effects ease towards the scroll position instead of jumping with each
-  // wheel step, so short transitions still play smoothly.
-  const SCROLL_SMOOTHING_MS = 250;
-  let shown = progress(), followRaf = 0, lastFrame = 0;
-  function follow(now) {
-    const target = progress();
-    const dt = lastFrame ? now - lastFrame : 16;
-    lastFrame = now;
-    shown += (target - shown) * (1 - Math.exp(-dt / SCROLL_SMOOTHING_MS));
-    if (Math.abs(target - shown) < 1e-4) shown = target;
-    render(shown);
-    if (shown === target) { followRaf = 0; lastFrame = 0; }
-    else followRaf = requestAnimationFrame(follow);
-  }
-  const onScroll = () => { if (!followRaf) followRaf = requestAnimationFrame(follow); };
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
-  render(shown);
+  const scrollYFor = view =>
+    scroller.offsetTop + (scroller.offsetHeight - window.innerHeight) * view / TRANSITIONS;
 
-  document.querySelectorAll('[data-goto]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const span = scroller.offsetHeight - window.innerHeight;
-      const top = scroller.offsetTop + span * (+btn.dataset.goto / TRANSITIONS);
-      window.scrollTo({ top, behavior: 'smooth' });
+  if (SNAP) setupSnap(); else setupScrub();
+
+  /* Snap: nothing moves while the scroll stays near a view. Crossing SNAP_THRESHOLD
+     plays the transition over SNAP_MS while the page glides to the next view; input
+     is held off until it lands, including leftover trackpad momentum. Past the last
+     view the page scrolls normally. */
+  function setupSnap() {
+    const SNAP_MS = 1200;
+    const SNAP_THRESHOLD = .08;           // share of a screen of scroll that triggers a snap
+    const MOMENTUM_QUIET_MS = 200;        // wheel must pause this long before it scrolls again
+    let view = Math.round(progress()), shown = view, anim = 0;
+    let lastWheel = 0, holdWheel = false, quietTimer = 0;
+
+    function goTo(target, moveScroll = true) {
+      target = clamp(Math.round(target), 0, TRANSITIONS);
+      cancelAnimationFrame(anim);
+      const fromP = shown, fromY = window.scrollY, toY = scrollYFor(target), t0 = performance.now();
+      view = target;
+      const step = now => {
+        const e = easeInOut(clamp((now - t0) / SNAP_MS));
+        shown = fromP + (target - fromP) * e;
+        render(shown);
+        if (moveScroll) window.scrollTo(0, fromY + (toY - fromY) * e);
+        if (e < 1) { anim = requestAnimationFrame(step); return; }
+        anim = 0;
+        // Swallow the tail of a trackpad flick so it doesn't trigger the next snap
+        if (performance.now() - lastWheel < 100) releaseWheelWhenQuiet();
+      };
+      anim = requestAnimationFrame(step);
+    }
+
+    function releaseWheelWhenQuiet() {
+      holdWheel = true;
+      clearTimeout(quietTimer);
+      quietTimer = setTimeout(() => { holdWheel = false; }, MOMENTUM_QUIET_MS);
+    }
+
+    window.addEventListener('scroll', () => {
+      if (anim) return;
+      const d = progress() - view;
+      if (Math.abs(d) >= 1) goTo(progress(), false);   // big jump (keys, scrollbar): follow without snapping
+      else if (d > SNAP_THRESHOLD && view < TRANSITIONS) goTo(view + 1);
+      else if (d < -SNAP_THRESHOLD && view > 0) goTo(view - 1);
+    }, { passive: true });
+
+    window.addEventListener('wheel', e => {
+      lastWheel = performance.now();
+      if (anim || holdWheel) { e.preventDefault(); if (holdWheel) releaseWheelWhenQuiet(); }
+    }, { passive: false });
+    window.addEventListener('touchmove', e => { if (anim) e.preventDefault(); }, { passive: false });
+    window.addEventListener('keydown', e => {
+      if (anim && ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].includes(e.key)) e.preventDefault();
     });
-  });
+    window.addEventListener('resize', () => { if (!anim) render(shown); });
+    render(shown);
+
+    document.querySelectorAll('[data-goto]').forEach(btn => {
+      btn.addEventListener('click', () => goTo(+btn.dataset.goto));
+    });
+  }
+
+  /* Scrub: the effects follow the scroll position, easing towards it instead of
+     jumping with each wheel step, so short transitions still play smoothly. */
+  function setupScrub() {
+    const SCROLL_SMOOTHING_MS = 250;
+    let shown = progress(), followRaf = 0, lastFrame = 0;
+    function follow(now) {
+      const target = progress();
+      const dt = lastFrame ? now - lastFrame : 16;
+      lastFrame = now;
+      shown += (target - shown) * (1 - Math.exp(-dt / SCROLL_SMOOTHING_MS));
+      if (Math.abs(target - shown) < 1e-4) shown = target;
+      render(shown);
+      if (shown === target) { followRaf = 0; lastFrame = 0; }
+      else followRaf = requestAnimationFrame(follow);
+    }
+    const onScroll = () => { if (!followRaf) followRaf = requestAnimationFrame(follow); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    render(shown);
+
+    document.querySelectorAll('[data-goto]').forEach(btn => {
+      btn.addEventListener('click', () => window.scrollTo({ top: scrollYFor(+btn.dataset.goto), behavior: 'smooth' }));
+    });
+  }
 
   /* ---------------- Video sync ----------------
      One virtual clock drives all three films. It only advances while every
