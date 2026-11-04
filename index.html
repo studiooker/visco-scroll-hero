@@ -726,12 +726,12 @@
   const BAR_STEP = 24.345;              // distance between progress bars
   const TRANSITIONS = 2;
   const params = new URLSearchParams(location.search);
-  // Wave shape of the dash transition: blobs (default), ?shape=diamond, ?shape=v or ?shape=wipe
-  const SHAPES = { diamond: 0, v: 1, wipe: 2, blobs: 3 };
+  // Wave shape of the dash transition: blobs (default), ?shape=diamond, ?shape=v, ?shape=wipe or ?shape=field
+  const SHAPES = { diamond: 0, v: 1, wipe: 2, blobs: 3, field: 4 };
   const SHAPE = SHAPES[params.get('shape')] ?? SHAPES.blobs;
   // Each scroll segment: rest | transition | rest. Everything animates inside [START, END].
-  // Wipe and blobs are quicker: 40vh instead of 80vh, with the titles moving in the same window.
-  const QUICK = SHAPE === SHAPES.wipe || SHAPE === SHAPES.blobs;
+  // Wipe, blobs and field are quicker: 40vh instead of 80vh, with the titles moving in the same window.
+  const QUICK = SHAPE === SHAPES.wipe || SHAPE === SHAPES.blobs || SHAPE === SHAPES.field;
   const [TRANSITION_START, TRANSITION_END] = QUICK ? [.4, .6] : [.3, .7];
 
   const scroller = document.getElementById('hero');
@@ -761,7 +761,8 @@
      merge into the full frame.
      ?shape=diamond grows a diamond from the centre instead,
      ?shape=v a V-shaped edge rising from the bottom,
-     ?shape=wipe a straight edge sweeping from bottom to top.
+     ?shape=wipe a straight edge sweeping from bottom to top,
+     ?shape=field the blob reveal with the dash-field geometry (dash ≈ gap).
      ?transition=line falls back to the Figma line reveal. */
   const fx = params.get('transition') === 'line'
     ? null
@@ -782,7 +783,7 @@
       uniform vec2  uCell;      // grid cell px
       uniform vec2  uCoverFrom, uCoverTo;  // object-fit: cover scale per film
       uniform float uProg;      // 0 … 1
-      uniform float uShape;     // 0 = diamond from the centre, 1 = V edge rising from the bottom, 2 = straight wipe up, 3 = random blobs
+      uniform float uShape;     // 0 = diamond from the centre, 1 = V edge rising from the bottom, 2 = straight wipe up, 3 = random blobs, 4 = dash field
       uniform float uSeed;      // varies the blob pattern per transition
 
       const float DIM  = 0.675;                      // matches .dim overlay
@@ -794,6 +795,11 @@
       const float BLOB_COUNT = 4.0;                  // blobs: roughly how many across the frame
       const float BLOB_TALL = 1.6;                   // blobs: height ÷ width
       const float BLOB_BAND = 0.3;                   // blobs: wider band, so dashes build up and merge gradually
+      // Dash field (from the visco-dash-field reference): sizes are fractions of the cell
+      const float FIELD_REST_LEN = 0.49, FIELD_PEAK_LEN = 0.55;  // dash length ≈ gap
+      const float FIELD_REST_W = 0.075, FIELD_PEAK_W = 0.275;
+      const float FIELD_BRICK = 0.59;                // every other column shifted 0.59 of a cell
+      const float FIELD_LIFT = 0.13;                 // random vertical nudge at peak
 
       float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
@@ -818,7 +824,8 @@
         vec2 frag = gl_FragCoord.xy;
         vec2 uv   = frag / uRes;
         vec2 rel  = frag - uRes * 0.5;                      // grid anchored on the centre
-        vec2 shift = vec2(0.0, mod(floor(rel.x / uCell.x), 2.0) * 0.5 * uCell.y); // every other column offset by half a cell
+        float brick = uShape > 3.5 ? FIELD_BRICK : 0.5;
+        vec2 shift = vec2(0.0, mod(floor(rel.x / uCell.x), 2.0) * brick * uCell.y); // every other column offset (brick)
         vec2 id   = floor((rel + shift) / uCell);
         vec2 cuv  = (rel + shift) / uCell - id - 0.5;       // -0.5 … 0.5 inside the cell
         vec2 cc   = ((id + 0.5) * uCell - shift + uRes * 0.5) / uRes;
@@ -858,7 +865,17 @@
         // starting as hairlines at the leading edge and filling the cell behind the wave
         float w = mix(mix(0.14, 0.42, thick), 1.02, widen);
         float h = mix(0.9, 1.02, widen);
-        float dash = box(cuv * uCell, vec2(w, h) * uCell * 0.5, vec2(0.75));
+        vec2  lift = vec2(0.0);
+        if (uShape > 3.5) {
+          // Dash field (visco-dash-field.pages.dev): dashes about half the cell tall, so dash and
+          // gap are close to equal; they swell from rest to peak, lift slightly, then merge
+          float act = smoothstep(0.08, 0.45, L);
+          float merge = smoothstep(0.5, 1.0, L);
+          w = mix(mix(FIELD_REST_W, FIELD_PEAK_W, act), 1.02, merge);
+          h = mix(mix(FIELD_REST_LEN, FIELD_PEAK_LEN, act), 1.02, merge);
+          lift.y = (hash(id + 71.0) - 0.5) * FIELD_LIFT * act * (1.0 - merge);
+        }
+        float dash = box((cuv - lift) * uCell, vec2(w, h) * uCell * 0.5, vec2(0.75));
 
         // The dashes are windows onto the incoming film, the outgoing film stays around them
         vec3 col = mix(a, b, dash * on);
@@ -909,7 +926,10 @@
     // Cell proportions from the reference (2.65× taller than wide), at about 1.5× its scale.
     // Cells scale with the frame on smaller screens and stop growing at their 1440px-wide
     // size (20px), so laptops and large desktops get the same dash size.
-    const CELL_W = .014, CELL_RATIO = 2.65, CELL_MIN = 11, CELL_MAX = 20;
+    const CELL_W = .014, CELL_MIN = 11, CELL_MAX = 20;
+    // The dash field uses the reference's grid (81 × 39 over a 16:9 frame), whose cells are
+    // only ~1.2× taller than wide, so its half-cell dashes come out short with equal gaps
+    const CELL_RATIO = shape === SHAPES.field ? 1.2 : 2.65;
     const dpr = () => Math.min(window.devicePixelRatio || 1, 1.5);
 
     function resize() {
