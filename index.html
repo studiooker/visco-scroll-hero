@@ -846,10 +846,10 @@
     gl.uniform1i(U.to, 1);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-    // Cell proportions from the reference (2.65× taller than wide), at about twice its scale.
+    // Cell proportions from the reference (2.65× taller than wide), at about 1.5× its scale.
     // Cells scale with the frame on smaller screens and stop growing at their 1440px-wide
-    // size (25px), so laptops and large desktops get the same dash size.
-    const CELL_W = .018, CELL_RATIO = 2.65, CELL_MIN = 14, CELL_MAX = 25;
+    // size (20px), so laptops and large desktops get the same dash size.
+    const CELL_W = .014, CELL_RATIO = 2.65, CELL_MIN = 11, CELL_MAX = 20;
     const dpr = () => Math.min(window.devicePixelRatio || 1, 1.5);
 
     function resize() {
