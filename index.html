@@ -412,6 +412,7 @@
       const float V_DEPTH = 0.7;                     // V: how far the centre trails the sides, × frame height
       const float BLOB_COUNT = 4.0;                  // blobs: roughly how many across the frame
       const float BLOB_TALL = 1.6;                   // blobs: height ÷ width
+      const float BLOB_BAND = 0.3;                   // blobs: wider band, so dashes build up and merge gradually
 
       float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
@@ -455,13 +456,14 @@
         // its low points light up first and grow outwards
         vec2  q    = vec2(cc.x, cc.y * uRes.y / uRes.x / BLOB_TALL) * BLOB_COUNT + uSeed * 17.31;
         float nb   = 0.65 * vnoise(q) + 0.35 * vnoise(q * 2.3 + 5.1);
-        float dB   = clamp((nb - 0.25) / 0.5, 0.0, 1.0);
+        float dB   = clamp((nb - 0.15) / 0.7, 0.0, 1.0);   // gentle stretch: few areas switch all at once
         if (uShape > 2.5)      d = dB;
         else if (uShape > 1.5) d = cc.y;   // wipe: 0 at the bottom, 1 at the top
         else if (uShape > 0.5) d = dV;
+        float band = uShape > 2.5 ? BLOB_BAND : BAND;
         float n  = hash(id);
-        float r  = uProg * (1.0 + BAND + JIT);
-        float L  = clamp((r - d - n * JIT) / BAND, 0.0, 1.0);
+        float r  = uProg * (1.0 + band + JIT);
+        float L  = clamp((r - d - n * JIT) / band, 0.0, 1.0);
 
         vec3 a = film(uFrom, uv, uCoverFrom);
         vec3 b = film(uTo,   uv, uCoverTo);
@@ -523,8 +525,8 @@
     gl.uniform1i(U.to, 1);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-    // Cell proportions from the reference (2.65× taller than wide), at about 4.3× its scale
-    const CELL_W = .04, CELL_RATIO = 2.65, CELL_MIN = 28;
+    // Cell proportions from the reference (2.65× taller than wide), at about twice its scale
+    const CELL_W = .018, CELL_RATIO = 2.65, CELL_MIN = 14;
     const dpr = () => Math.min(window.devicePixelRatio || 1, 1.5);
 
     function resize() {
@@ -584,8 +586,7 @@
   // 0 … 1 progress of transition i at scroll progress p
   const transitionT = (p, i) => range(p - i, TRANSITION_START, TRANSITION_END);
 
-  function render() {
-    const p = progress();
+  function render(p) {
     const k = clamp(window.innerWidth / DESIGN_W, .45, 1.6);
 
     if (fx) {
@@ -635,15 +636,24 @@
     thumb.style.transform = `translateY(${(pos * BAR_STEP).toFixed(2)}px)`;
   }
 
-  let ticking = false;
-  const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => { ticking = false; render(); });
-  };
+  // The effects ease towards the scroll position instead of jumping with each
+  // wheel step, so short transitions still play smoothly.
+  const SCROLL_SMOOTHING_MS = 250;
+  let shown = progress(), followRaf = 0, lastFrame = 0;
+  function follow(now) {
+    const target = progress();
+    const dt = lastFrame ? now - lastFrame : 16;
+    lastFrame = now;
+    shown += (target - shown) * (1 - Math.exp(-dt / SCROLL_SMOOTHING_MS));
+    if (Math.abs(target - shown) < 1e-4) shown = target;
+    render(shown);
+    if (shown === target) { followRaf = 0; lastFrame = 0; }
+    else followRaf = requestAnimationFrame(follow);
+  }
+  const onScroll = () => { if (!followRaf) followRaf = requestAnimationFrame(follow); };
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
-  render();
+  render(shown);
 
   document.querySelectorAll('[data-goto]').forEach(btn => {
     btn.addEventListener('click', () => {
