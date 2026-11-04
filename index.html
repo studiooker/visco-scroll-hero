@@ -414,10 +414,10 @@
       uniform float uVShape;    // 0 = diamond from the centre, 1 = V edge rising from the bottom
 
       const float DIM  = 0.675;                      // matches .dim overlay
-      const float BAND = 0.16;                       // wavefront thickness (~6 cols / ~3.5 rows at 1440×810)
-      const float JIT  = 0.04;                       // per-cell edge raggedness
+      const float BAND = 0.14;                       // wavefront thickness (~3 cols / ~1 row at 1440×810)
+      const float JIT  = 0.0;                        // per-cell edge raggedness (0 = clean stepped edge)
       const float DIAMOND = 1.0;                     // wave shape: 0 = rectangle, 1 = diamond
-      const float DIAMOND_TALL = 1.6;                // diamond height ÷ width
+      const float DIAMOND_TALL = 1.0;                // diamond height ÷ width
       const float V_DEPTH = 0.7;                     // V: how far the centre trails the sides, × frame height
 
       float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -452,21 +452,21 @@
         float dV   = (cc.y + V_DEPTH * (1.0 - e.x)) / (1.0 + V_DEPTH);
         d = mix(d, dV, uVShape);
         float n  = hash(id);
-        float fl = hash(id + floor(uProg * 40.0));          // flicker, stepped by scroll so it rests when idle
         float r  = uProg * (1.0 + BAND + JIT);
         float L  = clamp((r - d - n * JIT) / BAND, 0.0, 1.0);
 
         vec3 a = film(uFrom, uv, uCoverFrom);
         vec3 b = film(uTo,   uv, uCoverTo);
 
-        // Phases per cell: dashes appear → widen into the full frame
-        float on    = smoothstep(0.0, 0.15, L);
-        float widen = smoothstep(0.55, 1.0, L);
+        // Phases per cell: thin dashes appear at the leading edge → thicken → widen into the full frame
+        float on    = smoothstep(0.0, 0.08, L);
+        float thick = smoothstep(0.08, 0.2, L);
+        float widen = smoothstep(0.3, 1.0, L);
 
-        // Dash geometry from the reference: ~42% of the cell wide, ~90% tall (slight flicker),
-        // filling the cell behind the wave
-        float w = mix(0.42, 1.02, widen);
-        float h = mix(0.9 + 0.04 * (fl - 0.5), 1.02, widen);
+        // Dash geometry from the reference: ~42% of the cell wide, ~90% tall,
+        // starting as hairlines at the leading edge and filling the cell behind the wave
+        float w = mix(mix(0.14, 0.42, thick), 1.02, widen);
+        float h = mix(0.9, 1.02, widen);
         float dash = box(cuv * uCell, vec2(w, h) * uCell * 0.5, vec2(0.75));
 
         // The dashes are windows onto the incoming film, the outgoing film stays around them
@@ -515,8 +515,8 @@
     gl.uniform1i(U.to, 1);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-    // Cell proportions from the reference (2.65× taller than wide), at about twice its scale
-    const CELL_W = .018, CELL_RATIO = 2.65, CELL_MIN = 14;
+    // Cell proportions from the reference (2.65× taller than wide), at about 4.3× its scale
+    const CELL_W = .04, CELL_RATIO = 2.65, CELL_MIN = 28;
     const dpr = () => Math.min(window.devicePixelRatio || 1, 1.5);
 
     function resize() {
