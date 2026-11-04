@@ -236,6 +236,52 @@
   .logo-equinor__mark { inset: 0 0.01% 14.92% 71.62%; width: auto; height: auto; }
   .logo-equinor__word { inset: 54.91% 33.36% 0 0.01%; width: auto; height: auto; }
 
+  /* ---------- Workbench ---------- */
+  .workbench { background: var(--visco-surface-panel); padding: 96px 24px; display: flex; flex-direction: column; gap: 32px; }
+  .workbench__eyebrow {
+    margin: 0; font: 400 15px/15.6px var(--font-ui); letter-spacing: 0.4222px;
+    text-transform: uppercase; color: #fff;
+  }
+  /* 12-column grid, 24px gutters: media on columns 1–6, text on 8–12 */
+  .workbench__row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: start; }
+  .workbench__media { grid-column: 1 / span 6; aspect-ratio: 684 / 487; border-radius: 4.267px; overflow: clip; }
+  .workbench__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .workbench__text { grid-column: 8 / span 5; display: flex; flex-direction: column; gap: 24px; }
+  .workbench__text > *, .wb-card { max-width: 525px; }
+  .workbench__title {
+    margin: 0; font: 500 32px/48px var(--font-display); color: var(--visco-text-on-dark);
+    text-box: trim-both cap alphabetic;
+  }
+  .workbench__body { margin: 0 0 21.8px; font: 400 15px/21.8px var(--font-ui); color: #fff; }
+  .workbench__body p { margin: 0; }
+  .workbench__body p + p { margin-top: 21.8px; }
+  .workbench__cards { display: contents; list-style: none; }
+  .wb-card {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 12px; border-radius: 4px; background: #494949;
+  }
+  .wb-card__icon { flex-shrink: 0; padding: 6px; display: flex; }
+  .wb-card__text { flex: 1 0 0; min-width: 0; font: 400 15px/22.588px var(--font-ui); color: #fff; }
+  .wb-card__label { display: block; text-transform: uppercase; }
+  /* Visco icons: artwork boxes and masks as in Figma */
+  .icon36 { position: relative; display: block; width: 36px; height: 36px; }
+  .icon36 img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; }
+  .icon36__art { position: absolute; overflow: clip; }
+  .icon36__art--collapse { inset: 3.13%; overflow: visible; }
+  .icon36__art--checkbox { inset: 11.98% 1.04%; }
+  .icon36__art--add { inset: 4.69%; }
+  .icon36__group { position: absolute; }
+  .icon36__group--checkbox {
+    inset: 0 1% 0.58% 0;
+    -webkit-mask: url("assets/icons/checkbox-mask.svg") 0 0 / 34.898px 27.215px no-repeat;
+            mask: url("assets/icons/checkbox-mask.svg") 0 0 / 34.898px 27.215px no-repeat;
+  }
+  .icon36__group--add {
+    inset: 0 1.01% 0.98% 0;
+    -webkit-mask: url("assets/icons/add-mask.svg") 0 0 / 32.306px 32.306px no-repeat;
+            mask: url("assets/icons/add-mask.svg") 0 0 / 32.306px 32.306px no-repeat;
+  }
+
   @media (max-width: 900px) {
     .nav__btn:not(.nav__burger) { display: none; }
     .title--hero { white-space: normal; width: calc(100% - 32px); }
@@ -258,6 +304,12 @@
     .logos__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 16px; justify-items: center; }
     .logos__row > li { max-width: 100%; }
     .logos__row > li > img { max-width: 100%; height: auto; }
+  }
+  @media (max-width: 900px) {
+    .workbench { padding: 48px var(--section-pad); }
+    .workbench__row { grid-template-columns: minmax(0, 1fr); row-gap: 32px; }
+    .workbench__media, .workbench__text { grid-column: 1; }
+    .workbench__text > *, .wb-card { max-width: none; }
   }
   @media (max-width: 560px) {
     .header .cta--solid > span:first-child { display: none; }
@@ -374,6 +426,35 @@
       <li><img src="assets/logos/exxonmobil.svg" width="116.624" height="22" alt="ExxonMobil"></li>
       <li class="logos__dim"><img src="assets/logos/chevron.svg" width="35.8518" height="40" alt="Chevron"></li>
     </ul>
+  </section>
+  <section class="workbench" aria-labelledby="workbench-title">
+    <p class="workbench__eyebrow">Visco Workbench</p>
+    <div class="workbench__row">
+      <div class="workbench__media">
+        <img src="assets/workbench.png" width="684" height="487" alt="Visco Workbench showing a leak observation card over a photo of an industrial plant: reported level 3, sweating at A-20BL0094.">
+      </div>
+      <div class="workbench__text">
+        <h2 class="workbench__title" id="workbench-title">Where the work comes together</h2>
+        <div class="workbench__body">
+          <p>Visco Workbench transforms fragmented information into one visual operational environment.</p>
+          <p>Drawings, scans, models, systems, data and workflows come together around the physical reality of the asset, giving teams one place to understand, coordinate and act.</p>
+        </div>
+        <ul class="workbench__cards" role="list">
+          <li class="wb-card">
+            <span class="wb-card__icon"><span class="icon36"><span class="icon36__art icon36__art--collapse"><img src="assets/icons/collapse.svg" alt=""></span></span></span>
+            <span class="wb-card__text"><span class="wb-card__label">Connect</span>Bring fragmented operational information into one environment.</span>
+          </li>
+          <li class="wb-card">
+            <span class="wb-card__icon"><span class="icon36"><span class="icon36__art icon36__art--checkbox"><span class="icon36__group icon36__group--checkbox"><img src="assets/icons/checkbox.svg" alt=""></span></span></span></span>
+            <span class="wb-card__text"><span class="wb-card__label">Understand</span>Navigate the asset and see information in its real-world context.</span>
+          </li>
+          <li class="wb-card">
+            <span class="wb-card__icon"><span class="icon36"><span class="icon36__art icon36__art--add"><span class="icon36__group icon36__group--add"><img src="assets/icons/add.svg" alt=""></span></span></span></span>
+            <span class="wb-card__text"><span class="wb-card__label">Act</span>Put workflows and tools around the task and move work forward.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
   </section>
 </main>
 
