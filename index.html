@@ -41,6 +41,8 @@
     --font-display: "Denim INK WD", system-ui, sans-serif;
     --font-ui: "Test Die Grotesk A", system-ui, sans-serif;
     --font-label: "Geist", system-ui, sans-serif;
+    --section-pad: 48px;
+    --header-h: 86px;   /* 24 + 38 + 24 */
   }
 
   * { box-sizing: border-box; }
@@ -48,12 +50,18 @@
   body { -webkit-font-smoothing: antialiased; }
 
   /* ---------- Scroll track ---------- */
-  .scroller { position: relative; height: 500vh; } /* 1 screen + 2 segments × 200vh */
+  .scroller { position: relative; height: 500vh; background: var(--visco-surface-panel); } /* 1 screen + 2 segments × 200vh */
   .stage {
     position: sticky; top: 0;
     height: 100vh; max-height: 1280px;
-    overflow: hidden; background: #000;
+    /* Inset like .benefits, starting below the fixed header */
+    padding: var(--header-h) var(--section-pad) var(--section-pad);
   }
+  .frame {
+    position: relative; height: 100%;
+    background: #000; border-radius: 8px; overflow: clip;
+  }
+  .scroller + .benefits { padding-top: 0; } /* hero already supplies the gap above it */
 
   /* ---------- Films ---------- */
   .film {
@@ -84,9 +92,9 @@
   .title--sub {
     font-size: clamp(24px, 2.808vw, 56px);    /* 40.44 @ 1440 */
     letter-spacing: -0.02em;
-    width: min(calc(100vw - 32px), max(897.326px, 62.31vw));
+    width: min(calc(100% - 32px), max(897.326px, 62.31vw));
   }
-  .title--sub.is-narrow { width: min(calc(100vw - 32px), max(733.916px, 50.97vw)); }
+  .title--sub.is-narrow { width: min(calc(100% - 32px), max(733.916px, 50.97vw)); }
 
   /* ---------- Right-hand progress nav ---------- */
   .progress {
@@ -166,8 +174,7 @@
   .bottom-ctas__divider img { display: block; width: 27.1849px; height: 1px; }
 
   /* ---------- Benefits (tabbed panel) ---------- */
-  .benefits { background: var(--visco-surface-panel); padding: 48px; }
-  .benefits__inner { max-width: 1600px; margin: 0 auto; }
+  .benefits { background: var(--visco-surface-panel); padding: var(--section-pad); }
   .benefits__card {
     position: relative; height: 561.18px;
     background: #19191a; border-radius: 8px; overflow: clip;
@@ -239,12 +246,12 @@
 
   @media (max-width: 900px) {
     .nav__btn:not(.nav__burger) { display: none; }
-    .title--hero { white-space: normal; width: calc(100vw - 32px); }
+    .title--hero { white-space: normal; width: calc(100% - 32px); }
+    :root { --section-pad: 16px; --header-h: 70px; } /* 16 + 38 + 16 */
     .header { padding: 16px; }
     .progress { right: 12px; }
 
     /* Benefits: photo on top, tabs stacked underneath */
-    .benefits { padding: 16px; }
     .benefits__card { height: auto; }
     .benefits__panel { height: 300px; }
     .benefits__eyebrow { left: 20px; top: 14px; }
@@ -258,7 +265,7 @@
   @media (max-width: 560px) {
     .header .cta--accent > span:first-child { display: none; }
     .header .cta--accent { padding: 9px; }
-    .bottom-ctas .cta { padding: 8px; font-size: 13px; }
+    .bottom-ctas .cta { padding: 8px 4px; font-size: 13px; }
   }
 </style>
 </head>
@@ -287,7 +294,7 @@
 
 <main>
   <section class="scroller" id="hero">
-    <div class="stage">
+    <div class="stage"><div class="frame">
       <video class="film" data-film="1" src="assets/video/1video.mp4" muted playsinline loop preload="auto"></video>
       <video class="film" data-film="2" src="assets/video/2video_2.mp4" muted playsinline loop preload="auto"></video>
       <video class="film" data-film="3" src="assets/video/3video_1.mp4" muted playsinline loop preload="auto"></video>
@@ -310,7 +317,7 @@
         <span class="bottom-ctas__divider" aria-hidden="true"><img src="assets/line5.svg" alt=""></span>
         <a class="cta" href="#">Explore Visco Workbench</a>
       </div>
-    </div>
+    </div></div>
   </section>
   <section class="benefits" aria-label="Benefits">
     <div class="benefits__inner">
@@ -382,12 +389,14 @@
      Inspired by the "5th element" motion: a rectangular wave of vertical
      dashes expands from the centre. Each dash masks in the incoming film,
      then the dashes widen and merge into the full frame.
+     ?shape=v swaps the diamond for a V-shaped edge rising from the bottom.
      ?transition=line falls back to the Figma line reveal. */
-  const fx = new URLSearchParams(location.search).get('transition') === 'line'
+  const params = new URLSearchParams(location.search);
+  const fx = params.get('transition') === 'line'
     ? null
-    : createBarTransition(document.querySelector('.fx'));
+    : createBarTransition(document.querySelector('.fx'), params.get('shape') === 'v');
 
-  function createBarTransition(canvas) {
+  function createBarTransition(canvas, vShape) {
     const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
     if (!gl) return null;
 
@@ -402,12 +411,14 @@
       uniform vec2  uCell;      // grid cell px
       uniform vec2  uCoverFrom, uCoverTo;  // object-fit: cover scale per film
       uniform float uProg;      // 0 … 1
+      uniform float uVShape;    // 0 = diamond from the centre, 1 = V edge rising from the bottom
 
       const float DIM  = 0.675;                      // matches .dim overlay
       const float BAND = 0.16;                       // wavefront thickness (~6 cols / ~3.5 rows at 1440×810)
       const float JIT  = 0.04;                       // per-cell edge raggedness
       const float DIAMOND = 1.0;                     // wave shape: 0 = rectangle, 1 = diamond
       const float DIAMOND_TALL = 1.6;                // diamond height ÷ width
+      const float V_DEPTH = 0.7;                     // V: how far the centre trails the sides, × frame height
 
       float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
@@ -436,6 +447,10 @@
         vec2  px   = abs(cc - 0.5) * uRes;
         float dia  = (px.x + px.y / DIAMOND_TALL) / (0.5 * uRes.x + 0.5 * uRes.y / DIAMOND_TALL);
         float d    = mix(max(e.x, e.y), dia, DIAMOND);
+        // V: 0 at the bottom corners, 1 at the top centre, so the edge rises as a V
+        // with the sides leading and the centre V_DEPTH behind
+        float dV   = (cc.y + V_DEPTH * (1.0 - e.x)) / (1.0 + V_DEPTH);
+        d = mix(d, dV, uVShape);
         float n  = hash(id);
         float fl = hash(id + floor(uProg * 40.0));          // flicker, stepped by scroll so it rests when idle
         float r  = uProg * (1.0 + BAND + JIT);
@@ -484,6 +499,7 @@
     const u = name => gl.getUniformLocation(prog, name);
     const U = { from: u('uFrom'), to: u('uTo'), res: u('uRes'), cell: u('uCell'),
                 coverFrom: u('uCoverFrom'), coverTo: u('uCoverTo'), prog: u('uProg') };
+    gl.uniform1f(u('uVShape'), vShape ? 1 : 0);
 
     const textures = [0, 1].map(unit => {
       const t = gl.createTexture();
