@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Visco — Scroll Hero</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400&display=swap">
 <style>
   @font-face {
     font-family: "Denim INK WD";
@@ -40,7 +37,6 @@
     --film-dim: rgba(0, 0, 0, 0.325);
     --font-display: "Denim INK WD", system-ui, sans-serif;
     --font-ui: "Test Die Grotesk A", system-ui, sans-serif;
-    --font-label: "Geist", system-ui, sans-serif;
     --section-pad: 48px;
     --header-h: 86px;   /* 24 + 38 + 24 */
   }
@@ -61,7 +57,7 @@
     position: relative; height: 100%;
     background: #000; border-radius: 8px; overflow: clip;
   }
-  .scroller + .benefits { padding-top: 0; } /* hero already supplies the gap above it */
+  .scroller + .benefits { padding-top: calc(96px - var(--section-pad)); } /* hero frame already has --section-pad below it */
 
   /* ---------- Films ---------- */
   .film {
@@ -173,75 +169,52 @@
   }
   .bottom-ctas__divider img { display: block; width: 27.1849px; height: 1px; }
 
-  /* ---------- Benefits (tabbed panel) ---------- */
-  .benefits { background: var(--visco-surface-panel); padding: var(--section-pad); }
-  .benefits__card {
-    position: relative; height: 561.18px;
-    background: #19191a; border-radius: 8px; overflow: clip;
+  /* ---------- Benefits (tabs beside media) ---------- */
+  .benefits { background: var(--visco-surface-panel); padding: 96px 24px; }
+  .benefits__row { display: flex; gap: 24px; align-items: flex-start; min-height: 561.18px; }
+  .benefits__tabs { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: 36px; }
+  .benefits__media {
+    flex: 1 0 0; min-width: 0; height: 561px;
+    position: relative; border-radius: 4px; overflow: clip;
   }
-  .benefits__panel {
-    position: absolute; inset: -1px; max-height: 666px;
-    border: 1px solid rgba(0, 0, 0, .2); border-radius: 8px; overflow: clip;
+  .benefits__media-item {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity .8s ease;
   }
-  .benefits__img {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; opacity: 0; transition: opacity .8s ease;
-  }
-  .benefits__img.is-active { opacity: 1; }
-  .benefits__shade {
-    position: absolute; inset: 0;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, .6) 14%, rgba(0, 0, 0, 0) 49%, rgba(0, 0, 0, .8) 84%);
-  }
-  .benefits__eyebrow {
-    position: absolute; left: 36.44px; top: 29.65px; margin: 0;
-    font: 400 14px/29.647px var(--font-label); text-transform: uppercase;
-    color: var(--visco-text-on-dark); opacity: .5; white-space: nowrap;
-  }
-  .benefits__count {
-    position: absolute; right: 42.2px; top: 31px; margin: 0;
-    font: 400 48px/48px var(--font-display);
-    color: var(--visco-text-on-dark); opacity: .5;
-  }
+  .benefits__media-item.is-active { opacity: 1; }
 
-  .benefits__tabs {
-    position: absolute; left: 32px; right: 32px; bottom: 32px;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;
-  }
   .tab {
-    position: relative; height: 176.43px;
-    display: flex; flex-direction: column; justify-content: flex-end;
-    padding: 16px 0; border: 0; background: none; text-align: left;
-    color: #fff; cursor: pointer; font: inherit;
+    display: flex; gap: 12px; align-items: flex-start;
+    width: 100%; max-width: 500px; padding: 0;
+    border: 0; background: none; text-align: left; color: #fff; cursor: pointer; font: inherit;
+    opacity: .5; transition: opacity .3s ease;
   }
-  .tab:focus-visible { outline: 1px solid #fff; outline-offset: 4px; }
-  .tab__title {
-    font: 400 22px/32px var(--font-display); color: #fff;
-    opacity: .54; transition: opacity .3s ease;
+  .tab:hover, .tab.is-active { opacity: 1; }
+  .tab:focus-visible { outline: 1px solid #fff; outline-offset: 6px; }
+  /* Vertical track; the bright indicator fills it while the tab is active */
+  .tab__track {
+    position: relative; align-self: stretch; flex-shrink: 0;
+    width: 0.726px; margin: 14px 0 4px;
+    background: rgba(217, 217, 217, .33);
   }
-  .tab:hover .tab__title, .tab.is-active .tab__title { opacity: 1; }
-  .tab__body {
-    display: grid; grid-template-rows: 0fr;
-    transition: grid-template-rows .5s ease;
+  .tab__indicator {
+    position: absolute; left: 0; top: -1px; width: 100%; height: calc(100% + 1px);
+    background: #d9d9d9; transform: scaleY(0); transform-origin: top;
   }
-  .tab__body > span { overflow: hidden; min-height: 0; }
-  .tab__desc {
-    display: block; padding-top: 16px;
-    font: 400 14px/19.765px var(--font-ui); color: rgba(255, 255, 255, .8);
-    opacity: 0; transition: opacity .3s ease;
+  .tab__num {
+    flex: 0 0 72px; height: 48px;
+    font: 500 32px/48px var(--font-display); color: var(--visco-text-on-dark); opacity: .5;
   }
-  .tab.is-active .tab__body { grid-template-rows: 1fr; }
-  .tab.is-active .tab__desc { opacity: 1; transition-delay: .15s; }
-  .tab__line { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: #8b8b8b; }
-  .tab__progress {
-    position: absolute; inset: 0; background: var(--visco-surface-page);
-    transform: scaleX(0); transform-origin: left;
-  }
-  .tab.is-active .tab__progress { animation: benefits-progress var(--benefits-duration, 6s) linear forwards; }
-  .benefits.is-paused .tab__progress { animation-play-state: paused; }
-  @keyframes benefits-progress { to { transform: scaleX(1); } }
+  .tab__text { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; gap: 10px; opacity: .5; transition: opacity .3s ease; }
+  .tab.is-active .tab__text { opacity: 1; }
+  .tab__title { font: 500 32px/48px var(--font-display); color: var(--visco-text-on-dark); }
+  .tab__desc { font: 400 15px/19.765px var(--font-ui); color: #fff; }
+  .tab.is-active .tab__indicator { animation: benefits-progress var(--benefits-duration, 6s) linear forwards; }
+  .benefits.is-paused .tab__indicator { animation-play-state: paused; }
+  @keyframes benefits-progress { to { transform: scaleY(1); } }
   @media (prefers-reduced-motion: reduce) {
-    .tab.is-active .tab__progress { animation: none; transform: scaleX(1); }
-    .benefits__img, .tab__body, .tab__desc, .tab__title { transition: none; }
+    .tab.is-active .tab__indicator { animation: none; transform: scaleY(1); }
+    .tab, .tab__text, .benefits__media-item { transition: none; }
   }
 
   @media (max-width: 900px) {
@@ -251,16 +224,15 @@
     .header { padding: 16px; }
     .progress { right: 12px; }
 
-    /* Benefits: photo on top, tabs stacked underneath */
-    .benefits__card { height: auto; }
-    .benefits__panel { height: 300px; }
-    .benefits__eyebrow { left: 20px; top: 14px; }
-    .benefits__count { right: 20px; top: 20px; font-size: 36px; line-height: 36px; }
-    .benefits__tabs {
-      position: relative; left: auto; right: auto; bottom: auto;
-      grid-template-columns: 1fr; gap: 0; padding: 300px 20px 12px;
-    }
-    .tab { height: auto; padding: 18px 0; }
+    /* Benefits: media on top, tabs stacked underneath */
+    .benefits { padding: 48px var(--section-pad); }
+    .benefits__row { flex-direction: column; gap: 32px; min-height: 0; }
+    .benefits__media { order: -1; flex: none; width: 100%; height: 300px; }
+    .benefits__tabs { flex: none; width: 100%; gap: 28px; }
+    .tab { max-width: none; }
+    .tab__num { flex-basis: 48px; font-size: 24px; line-height: 36px; height: 36px; }
+    .tab__title { font-size: 24px; line-height: 36px; }
+    .tab__track { margin-top: 10px; }
   }
   @media (max-width: 560px) {
     .header .cta--accent > span:first-child { display: none; }
@@ -320,37 +292,45 @@
     </div></div>
   </section>
   <section class="benefits" aria-label="Benefits">
-    <div class="benefits__inner">
-      <div class="benefits__card">
-        <div class="benefits__panel" id="benefits-panel" role="tabpanel" aria-live="polite">
-          <img class="benefits__img" data-img="1" src="assets/benefits-1.png" alt="Operator in a hard hat using a tablet inside a machine cab.">
-          <img class="benefits__img" data-img="2" src="assets/benefits-2.png" alt="Worker in a high-visibility vest using a tablet inside an industrial facility.">
-          <div class="benefits__shade"></div>
-          <p class="benefits__eyebrow">One operational flow</p>
-          <p class="benefits__count" aria-hidden="true">01</p>
-        </div>
-        <div class="benefits__tabs" role="tablist" aria-label="Benefits">
-          <button class="tab" type="button" role="tab" data-img="2" aria-controls="benefits-panel">
-            <span class="tab__title">See the full picture</span>
-            <span class="tab__body"><span><span class="tab__desc">Bring the asset, the information and the work together in one visual environment.</span></span></span>
-            <span class="tab__line"><span class="tab__progress"></span></span>
+    <div class="benefits__row">
+      <div class="benefits__tabs" role="tablist" aria-label="Benefits" aria-orientation="vertical">
+          <button class="tab" type="button" role="tab" aria-controls="benefits-media" data-media="drone">
+            <span class="tab__track"><span class="tab__indicator"></span></span>
+            <span class="tab__num">01</span>
+            <span class="tab__text">
+              <span class="tab__title">See the full picture</span>
+              <span class="tab__desc">Bring the asset, the information and the work together in one visual environment.</span>
+            </span>
           </button>
-          <button class="tab" type="button" role="tab" data-img="1" aria-controls="benefits-panel">
-            <span class="tab__title">Find what matters fast</span>
-            <span class="tab__body"><span><span class="tab__desc">Move directly from the big picture to the asset, drawing, data or detail you need.</span></span></span>
-            <span class="tab__line"><span class="tab__progress"></span></span>
+          <button class="tab" type="button" role="tab" aria-controls="benefits-media" data-media="screen">
+            <span class="tab__track"><span class="tab__indicator"></span></span>
+            <span class="tab__num">02</span>
+            <span class="tab__text">
+              <span class="tab__title">Find what matters fast</span>
+              <span class="tab__desc">Move directly from the big picture to the asset, drawing, data or detail you need.</span>
+            </span>
           </button>
-          <button class="tab" type="button" role="tab" data-img="2" aria-controls="benefits-panel">
-            <span class="tab__title">Work in context</span>
-            <span class="tab__body"><span><span class="tab__desc">See information where it belongs, around the physical environment, the task and the people doing the work.</span></span></span>
-            <span class="tab__line"><span class="tab__progress"></span></span>
+          <button class="tab" type="button" role="tab" aria-controls="benefits-media" data-media="tablet">
+            <span class="tab__track"><span class="tab__indicator"></span></span>
+            <span class="tab__num">03</span>
+            <span class="tab__text">
+              <span class="tab__title">Work in context</span>
+              <span class="tab__desc">See information where it belongs, around the physical environment, the task and the people doing the work.</span>
+            </span>
           </button>
-          <button class="tab" type="button" role="tab" data-img="1" aria-controls="benefits-panel">
-            <span class="tab__title">Move straight to execution</span>
-            <span class="tab__body"><span><span class="tab__desc">Turn operational understanding into clearer decisions, better coordination and more confident execution.</span></span></span>
-            <span class="tab__line"><span class="tab__progress"></span></span>
+          <button class="tab" type="button" role="tab" aria-controls="benefits-media" data-media="drone">
+            <span class="tab__track"><span class="tab__indicator"></span></span>
+            <span class="tab__num">04</span>
+            <span class="tab__text">
+              <span class="tab__title">Move straight to execution</span>
+              <span class="tab__desc">Turn operational understanding into clearer decisions, better coordination and more confident execution.</span>
+            </span>
           </button>
-        </div>
+      </div>
+      <div class="benefits__media" id="benefits-media" role="tabpanel">
+        <video class="benefits__media-item" data-media="drone" src="assets/video/benefits-drone.mp4" muted playsinline loop preload="metadata" aria-label="Drone shot over an industrial site at night."></video>
+        <video class="benefits__media-item" data-media="tablet" src="assets/video/benefits-tablet.mp4" muted playsinline loop preload="metadata" aria-label="Worker in a high-visibility jacket using a tablet at night."></video>
+        <img class="benefits__media-item" data-media="screen" src="assets/benefits-screen.webp" alt="Two people reviewing a 3D model of an offshore platform on a large touchscreen.">
       </div>
     </div>
   </section>
@@ -361,8 +341,14 @@
   const DESIGN_W = 1440;
   const BAR_STEP = 24.345;              // distance between progress bars
   const TRANSITIONS = 2;
+  const params = new URLSearchParams(location.search);
+  // Wave shape of the dash transition: diamond (default), ?shape=v, ?shape=wipe or ?shape=blobs
+  const SHAPES = { diamond: 0, v: 1, wipe: 2, blobs: 3 };
+  const SHAPE = SHAPES[params.get('shape')] ?? SHAPES.diamond;
   // Each scroll segment: rest | transition | rest. Everything animates inside [START, END].
-  const TRANSITION_START = .3, TRANSITION_END = .7;    // 80vh transition, 120vh of content between views
+  // Wipe and blobs are quicker: 40vh instead of 80vh, with the titles moving in the same window.
+  const QUICK = SHAPE === SHAPES.wipe || SHAPE === SHAPES.blobs;
+  const [TRANSITION_START, TRANSITION_END] = QUICK ? [.4, .6] : [.3, .7];
 
   const scroller = document.getElementById('hero');
   const films = [...document.querySelectorAll('.film')];
@@ -389,14 +375,15 @@
      Inspired by the "5th element" motion: a rectangular wave of vertical
      dashes expands from the centre. Each dash masks in the incoming film,
      then the dashes widen and merge into the full frame.
-     ?shape=v swaps the diamond for a V-shaped edge rising from the bottom.
+     ?shape=v swaps the diamond for a V-shaped edge rising from the bottom,
+     ?shape=wipe for a straight edge sweeping from bottom to top,
+     ?shape=blobs for dashes appearing in random blobs that grow and merge.
      ?transition=line falls back to the Figma line reveal. */
-  const params = new URLSearchParams(location.search);
   const fx = params.get('transition') === 'line'
     ? null
-    : createBarTransition(document.querySelector('.fx'), params.get('shape') === 'v');
+    : createBarTransition(document.querySelector('.fx'), SHAPE);
 
-  function createBarTransition(canvas, vShape) {
+  function createBarTransition(canvas, shape) {
     const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
     if (!gl) return null;
 
@@ -411,7 +398,8 @@
       uniform vec2  uCell;      // grid cell px
       uniform vec2  uCoverFrom, uCoverTo;  // object-fit: cover scale per film
       uniform float uProg;      // 0 … 1
-      uniform float uVShape;    // 0 = diamond from the centre, 1 = V edge rising from the bottom
+      uniform float uShape;     // 0 = diamond from the centre, 1 = V edge rising from the bottom, 2 = straight wipe up, 3 = random blobs
+      uniform float uSeed;      // varies the blob pattern per transition
 
       const float DIM  = 0.675;                      // matches .dim overlay
       const float BAND = 0.14;                       // wavefront thickness (~3 cols / ~1 row at 1440×810)
@@ -419,8 +407,18 @@
       const float DIAMOND = 1.0;                     // wave shape: 0 = rectangle, 1 = diamond
       const float DIAMOND_TALL = 1.0;                // diamond height ÷ width
       const float V_DEPTH = 0.7;                     // V: how far the centre trails the sides, × frame height
+      const float BLOB_COUNT = 4.0;                  // blobs: roughly how many across the frame
+      const float BLOB_TALL = 1.6;                   // blobs: height ÷ width
 
       float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+
+      // Smooth value noise for the blob field
+      float vnoise(vec2 p) {
+        vec2 i = floor(p), f = fract(p);
+        vec2 s = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), s.x),
+                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), s.x), s.y);
+      }
 
       vec3 film(sampler2D tex, vec2 uv, vec2 cover) {
         return texture2D(tex, (uv - 0.5) / cover + 0.5).rgb * DIM;
@@ -450,7 +448,14 @@
         // V: 0 at the bottom corners, 1 at the top centre, so the edge rises as a V
         // with the sides leading and the centre V_DEPTH behind
         float dV   = (cc.y + V_DEPTH * (1.0 - e.x)) / (1.0 + V_DEPTH);
-        d = mix(d, dV, uVShape);
+        // Blobs: a soft noise field, BLOB_COUNT blobs across and stretched vertically;
+        // its low points light up first and grow outwards
+        vec2  q    = vec2(cc.x, cc.y * uRes.y / uRes.x / BLOB_TALL) * BLOB_COUNT + uSeed * 17.31;
+        float nb   = 0.65 * vnoise(q) + 0.35 * vnoise(q * 2.3 + 5.1);
+        float dB   = clamp((nb - 0.25) / 0.5, 0.0, 1.0);
+        if (uShape > 2.5)      d = dB;
+        else if (uShape > 1.5) d = cc.y;   // wipe: 0 at the bottom, 1 at the top
+        else if (uShape > 0.5) d = dV;
         float n  = hash(id);
         float r  = uProg * (1.0 + BAND + JIT);
         float L  = clamp((r - d - n * JIT) / BAND, 0.0, 1.0);
@@ -498,8 +503,8 @@
 
     const u = name => gl.getUniformLocation(prog, name);
     const U = { from: u('uFrom'), to: u('uTo'), res: u('uRes'), cell: u('uCell'),
-                coverFrom: u('uCoverFrom'), coverTo: u('uCoverTo'), prog: u('uProg') };
-    gl.uniform1f(u('uVShape'), vShape ? 1 : 0);
+                coverFrom: u('uCoverFrom'), coverTo: u('uCoverTo'), prog: u('uProg'), seed: u('uSeed') };
+    gl.uniform1f(u('uShape'), shape);
 
     const textures = [0, 1].map(unit => {
       const t = gl.createTexture();
@@ -551,6 +556,7 @@
       gl.uniform2f(U.coverFrom, ...cover(state.from));
       gl.uniform2f(U.coverTo, ...cover(state.to));
       gl.uniform1f(U.prog, state.t);
+      gl.uniform1f(U.seed, state.seed);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       canvas.style.visibility = 'visible';
       raf = requestAnimationFrame(draw);       // keep the films moving while the wave is on screen
@@ -586,7 +592,7 @@
         const n = +v.dataset.film;
         if (n === 1) return;
         const t = transitionT(p, n - 2);
-        if (t > 0 && t < 1) active = { from: films[n - 2], to: v, t };
+        if (t > 0 && t < 1) active = { from: films[n - 2], to: v, t, seed: n };
         v.style.clipPath = t >= 1 ? 'none' : 'inset(50% 50%)';
       });
       fx.set(active);
@@ -697,14 +703,13 @@
   });
 
   /* ---------------- Benefits tabs ----------------
-     The active tab's line fills over BENEFITS_MS, then the next tab takes
+     The active tab's track fills over BENEFITS_MS, then the next tab takes
      over. Clicking a tab jumps to it and restarts the timer. The timer
      pauses while the section is off screen. */
   const BENEFITS_MS = 6000;
   const benefits = document.querySelector('.benefits');
   const tabs = [...benefits.querySelectorAll('.tab')];
-  const images = [...benefits.querySelectorAll('.benefits__img')];
-  const count = benefits.querySelector('.benefits__count');
+  const media = [...benefits.querySelectorAll('.benefits__media-item')];
   const autoplay = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   benefits.style.setProperty('--benefits-duration', `${BENEFITS_MS}ms`);
 
@@ -717,26 +722,41 @@
     });
     void tabs[index].offsetWidth;       // restart the progress animation
     tabs[index].classList.add('is-active');
-    images.forEach(img => img.classList.toggle('is-active', img.dataset.img === tabs[index].dataset.img));
-    count.textContent = String(index + 1).padStart(2, '0');
+    media.forEach(m => m.classList.toggle('is-active', m.dataset.media === tabs[index].dataset.media));
+    syncVideos();
+  }
+
+  let onScreen = false;
+  function syncVideos() {
+    media.forEach(m => {
+      if (m.tagName !== 'VIDEO') return;
+      const show = onScreen && m.classList.contains('is-active');
+      if (!show) m.pause();
+      else if (autoplay) m.play().catch(() => {});
+      else m.preload = 'auto';            // reduced motion: load the first frame, don't play
+    });
   }
 
   tabs.forEach((tab, i) => {
     tab.addEventListener('click', () => selectTab(i));
-    tab.querySelector('.tab__progress').addEventListener('animationend', () => {
+    tab.querySelector('.tab__indicator').addEventListener('animationend', () => {
       if (autoplay) selectTab((i + 1) % tabs.length);
     });
     tab.addEventListener('keydown', e => {
-      const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
       if (!step) return;
+      e.preventDefault();
       const next = (i + step + tabs.length) % tabs.length;
       selectTab(next);
       tabs[next].focus();
     });
   });
 
+  // Pause the timer, and the videos, while the section is off screen
   new IntersectionObserver(([entry]) => {
-    benefits.classList.toggle('is-paused', !entry.isIntersecting);
+    onScreen = entry.isIntersecting;
+    benefits.classList.toggle('is-paused', !onScreen);
+    syncVideos();
   }, { threshold: .35 }).observe(benefits);
 
   selectTab(0);
