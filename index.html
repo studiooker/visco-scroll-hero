@@ -726,9 +726,9 @@
   const BAR_STEP = 24.345;              // distance between progress bars
   const TRANSITIONS = 2;
   const params = new URLSearchParams(location.search);
-  // Wave shape of the dash transition: blobs (default), ?shape=diamond, ?shape=v, ?shape=wipe or ?shape=field
+  // Wave shape of the dash transition: field (default), ?shape=blobs, ?shape=diamond, ?shape=v or ?shape=wipe
   const SHAPES = { diamond: 0, v: 1, wipe: 2, blobs: 3, field: 4 };
-  const SHAPE = SHAPES[params.get('shape')] ?? SHAPES.blobs;
+  const SHAPE = SHAPES[params.get('shape')] ?? SHAPES.field;
   // Each scroll segment: rest | transition | rest. Everything animates inside [START, END].
   // Wipe, blobs and field are quicker: 40vh instead of 80vh, with the titles moving in the same window.
   const QUICK = SHAPE === SHAPES.wipe || SHAPE === SHAPES.blobs || SHAPE === SHAPES.field;
@@ -761,13 +761,14 @@
   const easeOut = t => 1 - Math.pow(1 - t, 3);
 
   /* ---------------- Bar-grid transition ----------------
-     Inspired by the "5th element" motion: vertical dashes appear in random
-     blobs. Each dash masks in the incoming film, then the dashes widen and
+     Inspired by the "5th element" motion and the dash-field graphic: short
+     vertical dashes, about as long as the gaps between them, appear in random
+     blobs. Each dash masks in the incoming film, then the dashes swell and
      merge into the full frame.
-     ?shape=diamond grows a diamond from the centre instead,
+     ?shape=blobs uses the longer, taller dashes instead,
+     ?shape=diamond grows a diamond from the centre,
      ?shape=v a V-shaped edge rising from the bottom,
-     ?shape=wipe a straight edge sweeping from bottom to top,
-     ?shape=field the blob reveal with the dash-field geometry (dash ≈ gap).
+     ?shape=wipe a straight edge sweeping from bottom to top.
      ?transition=line falls back to the Figma line reveal. */
   const fx = params.get('transition') === 'line'
     ? null
