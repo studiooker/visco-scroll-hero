@@ -37,7 +37,7 @@
     --film-dim: rgba(0, 0, 0, 0.325);
     --font-display: "Denim INK WD", system-ui, sans-serif;
     --font-ui: "Test Die Grotesk A", system-ui, sans-serif;
-    --section-pad: 48px;
+    --section-pad: 24px;
     --header-h: 86px;   /* 24 + 38 + 24 */
   }
 
@@ -51,13 +51,12 @@
     position: sticky; top: 0;
     height: 100vh; max-height: 1280px;
     /* Inset like .benefits, starting below the fixed header */
-    padding: var(--header-h) var(--section-pad) var(--section-pad);
+    padding: var(--header-h) var(--section-pad) 0;
   }
   .frame {
     position: relative; height: 100%;
-    background: #000; border-radius: 8px; overflow: clip;
+    background: #000; border-radius: 4px; overflow: clip;
   }
-  .scroller + .benefits { padding-top: calc(96px - var(--section-pad)); } /* hero frame already has --section-pad below it */
 
   /* ---------- Films ---------- */
   .film {
@@ -81,7 +80,7 @@
     will-change: transform, opacity;
   }
   .title--hero {
-    font-size: clamp(40px, 5.933vw, 120px);   /* 85.44 @ 1440 */
+    font-size: clamp(32px, 4.544vw, 92px);    /* 65.44 @ 1440 */
     letter-spacing: -0.02em;
     white-space: nowrap;
   }
@@ -124,21 +123,25 @@
   .logo__symbol { position: absolute; top: 0; bottom: 0; left: 0; right: 77.15%; }
 
   .nav {
+    position: relative;
     display: flex; align-items: flex-start; gap: 6px;
     padding: 0 var(--visco-space-xs);
-    background: rgba(0, 0, 0, .3);
-    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
     border-radius: 3px; overflow: clip; flex-shrink: 0;
+  }
+  .nav::before {
+    content: ""; position: absolute; inset: 0; border-radius: 3px; pointer-events: none;
+    background: rgba(133, 133, 133, .25); mix-blend-mode: difference;
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
   }
   .nav__btn {
     display: flex; align-items: center; justify-content: center;
     padding: 8px 16px; border: 0; background: none; border-radius: 2px;
     font: 400 15px/1.45 var(--font-ui); color: #fff; white-space: nowrap;
-    cursor: pointer; text-decoration: none;
+    cursor: pointer; text-decoration: none; position: relative;
   }
   .nav__burger { padding: 8px; align-self: stretch; }
-  .hamburger { display: flex; flex-direction: column; gap: 8px; width: 28px; }
-  .hamburger span { display: block; height: 1px; width: 100%; background: #d9d9d9; }
+  .hamburger { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 28px; }
+  .hamburger span { display: block; height: 0.778px; width: 21.774px; background: #d9d9d9; }
 
   .cta {
     display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -146,7 +149,7 @@
     font: 400 15px/1.45 var(--font-ui); color: var(--visco-text-on-dark);
     white-space: nowrap; text-decoration: none;
   }
-  .cta--accent { background: var(--visco-surface-accent); }
+  .cta--solid { background: #000; }
   .icon-expand { position: relative; width: 20px; height: 20px; flex-shrink: 0; }
   .icon-expand__art { position: absolute; inset: 11.46%; overflow: clip; }
   .icon-expand__clip { position: absolute; inset: 0 1.05% 1.05% 0; }
@@ -235,8 +238,8 @@
     .tab__track { margin-top: 10px; }
   }
   @media (max-width: 560px) {
-    .header .cta--accent > span:first-child { display: none; }
-    .header .cta--accent { padding: 9px; }
+    .header .cta--solid > span:first-child { display: none; }
+    .header .cta--solid { padding: 9px; }
     .bottom-ctas .cta { padding: 8px 4px; font-size: 13px; }
   }
 </style>
@@ -256,7 +259,7 @@
       <span class="hamburger"><span></span><span></span></span>
     </button>
   </nav>
-  <a class="cta cta--accent" href="#">
+  <a class="cta cta--solid" href="#">
     <span>Talk to an expert</span>
     <span class="icon-expand" aria-hidden="true">
       <span class="icon-expand__art"><span class="icon-expand__clip"><span class="icon-expand__group"><img src="assets/expand.svg" alt=""></span></span></span>
